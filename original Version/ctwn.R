@@ -22,7 +22,7 @@ APSIMsens <- matrix(0, 30, 32) # Create placeholder matrix, to speed things up.
 Infosens <- matrix(0, 30, 32) # Create placeholder matrix, to speed things up.
 
 # List all ACMO files
-files <- list.files(path=fileDir,pattern=".csv", full.names=T, recursive=FALSE)
+files <- list.files(path=fileDir, pattern="ACMO*", full.names=T, recursive=FALSE)
 
 # Find the models associated with each ACMO file (only considering 3 for now, but more can be added)
 
@@ -32,15 +32,8 @@ if(grepl("APSIM", files[d])) {
 print("found")
 APSIM <- read.csv(file=files[d],skip = 2, head=TRUE,sep=",")
 	# If APSIM ACMO exists, then extract the 30 years x 32 Linear Factor Analysis Sensitivity Tests for yield, or other variable of interest. Here is where we can change the dependent variable (see "HWAH" below)
-    
-#Extract Meta data
-Exname<-APSIM$EXNAME[1]
-#Exname<-unlist(strsplit(APSIM$EXNAME[1],"_"))
-Cropname<-APSIM$CRID_text[1]
-#****************************
-
 for (i in 1:32) {
-APSIMsens[,i] <- APSIM$HWAH_S[(1+30*(i-1)):(30+30*(i-1))] 
+APSIMsens[,i] <- APSIM$HWAH[(1+30*(i-1)):(30+30*(i-1))]
 }}
 	# Finish looping, and print done. If "done" is reached without a "found", then model doesn't exist.
 else {print("done")}
@@ -53,7 +46,7 @@ print("found")
 DSSAT <- read.csv(file=files[d],skip = 2, head=TRUE,sep=",")
 	# If DSSAT ACMO exists, then extract the 30 years x 32 Linear Factor Analysis Sensitivity Tests for yield, or other variable of interest. Here is where we can change the dependent variable (see "HWAH" below)
 for (i in 1:32) {
-DSSATsens[,i] <- DSSAT$HWAH_S[(1+30*(i-1)):(30+30*(i-1))] 
+DSSATsens[,i] <- DSSAT$HWAH[(1+30*(i-1)):(30+30*(i-1))]
 }}
 	# Finish looping, and print done. If "done" is reached without a "found", then model doesn't exist.
 else {print("done")}
@@ -66,7 +59,7 @@ print("found")
 Info <- read.csv(file=files[d],skip = 2, head=TRUE,sep=",")
 	# If Infocrop ACMO exists, then extract the 30 years x 32 Linear Factor Analysis Sensitivity Tests for yield, or other variable of interest. Here is where we can change the dependent variable (see "HWAH" below)
 for (i in 1:32) {
-Infosens[,i] <- Info$HWAH_S[(1+30*(i-1)):(30+30*(i-1))] 
+Infosens[,i] <- Info$HWAH[(1+30*(i-1)):(30+30*(i-1))]
 }}
 	# Finish looping, and print done. If "done" is reached without a "found", then model doesn't exist.
 else {print("done")}
@@ -77,7 +70,7 @@ if (whichplot=="l"){
 ###### Lineplots of Linear Factor Analysis #######
 pdf(pdfoutput,width=4,height=20)
 attach(mtcars)
-par(mfrow=c(5,1),oma=c(0,0,2,0))
+par(mfrow=c(5,1))
 #CO2 at 30 N________________________
 model <- DSSATsens # Change the model of interest here
 
@@ -110,7 +103,6 @@ matlines(years, model[,11:16], type = "l", lty = 1:6, lwd = 1, pch = NULL,
           col = 1:6, xlab="Years", ylab="Yield")
           
 legend("topright", title="TmaxTmin Sensitivity", cex=0.75, pch=16, col=1:6, legend=c("-2˚C", "0","","+2˚C","+4˚C","+6˚C","+8˚C"), ncol=2)
-
 #dev.off()
 
 #Rainfall________________________ 
@@ -133,10 +125,6 @@ matlines(years, model[,25:32], type = "l", lty = 1:8, lwd = 1, pch = NULL,
           col = 1:8, xlab="Years", ylab="Yield")
           
 legend("topright", title="Fertilizer Sensitivity (kg/ha)", cex=0.75, pch=16, col=1:8, legend=c("0","30","60","90","120","150","180","210"), ncol=2)
-
-#Add the title of meta data
-mtext(paste(Cropname," Yield Sensitivity in ",Exname,sep=""),outer=TRUE,cex=0.9)
-#********************
 dev.off()
 }
 #___________________________________________#
@@ -164,7 +152,7 @@ if (whichplot=="b"){
 
 pdf(pdfoutput,width=4,height=20)
 attach(mtcars)
-par(mfrow=c(5,1),oma=c(0,0,2,0))
+par(mfrow=c(5,1))
 #pdf('Boxplot CO2 Sensitivity at N=30kg-ha.pdf')
 boxplot(multimod[,1:10], ylab = "Yield", xlab = "CO2 Level (ppm)", las = 2, col = c("red","sienna","red","sienna","red","sienna","red","sienna","red","sienna"), at=c(1,2, 4,5, 7,8, 10,11, 13,14), names=c("360"," ","450"," ","540"," ","630"," ","720"," "))
 legend("topright", title="CO2 Sensitivity at N=30kg/ha", cex=0.75, pch=16, col=c("red","sienna"), legend=c("DSSAT", "APSIM"), ncol=2)
@@ -206,17 +194,12 @@ boxplot(multimod[,49:64], ylab = "Yield", xlab = "Fertilizer Application (kg/ha)
 legend("topright", title="N Sensitivity", cex=0.75, pch=16, col=c("red","sienna"), legend=c("DSSAT", "APSIM"), ncol=2)
 # Plot means on top of boxplots
 points(c(1,2, 4,5, 7,8, 10,11, 13,14, 16,17, 19,20, 22,23), colMeans(multimod[,49:64]), pch = 22, col = "darkgrey", lwd = 7)
-
-#Add the title of meta data
-mtext(paste(Cropname," Yield Sensitivity in ",Exname,sep=""),outer=TRUE,cex=0.9)
-#********************
-
 dev.off()
 }
 }
 
 args<-commandArgs(trailingOnly=TRUE)
-fileDir<-"/Users/weixiong/Development/face-it/RIA/C3MP_New/Version_1.0.2"#args[1]
-whichplot<-"l"#args[2]
-pdfoutput<-"2.pdf"#args[3]
+fileDir<-args[1]
+whichplot<-args[2]
+pdfoutput<-args[3]
 ctwn(fileDir,whichplot,pdfoutput)
